@@ -5,6 +5,7 @@ package mockconsul
 import (
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/hashicorp/consul/api"
 	mockapi "github.com/mkeeler/mock-http-api"
@@ -160,8 +161,45 @@ func (m *Consul) AgentTokenSet(tokenType string, body []byte, status int) *mocka
 	return m.WithNoResponseBody(req, status)
 }
 
+func durToMsec(dur time.Duration) string {
+	ms := dur / time.Millisecond
+	if dur > 0 && ms == 0 {
+		ms = 1
+	}
+	return fmt.Sprintf("%dms", ms)
+}
+
 func (m *Consul) SessionCreate(sessionEntry *api.SessionEntry, writeOptions *api.WriteOptions, status int, reply map[string]string) *mockapi.MockAPICall {
-	req := mockapi.NewMockRequest("PUT", "/v1/session/create").WithBody(sessionEntry)
+	var obj interface{}
+	if sessionEntry != nil {
+		body := make(map[string]interface{})
+		obj = body
+		if sessionEntry.Name != "" {
+			body["Name"] = sessionEntry.Name
+		}
+		if sessionEntry.Node != "" {
+			body["Node"] = sessionEntry.Node
+		}
+		if sessionEntry.LockDelay != 0 {
+			body["LockDelay"] = durToMsec(sessionEntry.LockDelay)
+		}
+		if len(sessionEntry.Checks) > 0 {
+			body["Checks"] = sessionEntry.Checks
+		}
+		if len(sessionEntry.NodeChecks) > 0 {
+			body["NodeChecks"] = sessionEntry.NodeChecks
+		}
+		if len(sessionEntry.ServiceChecks) > 0 {
+			body["ServiceChecks"] = sessionEntry.ServiceChecks
+		}
+		if sessionEntry.Behavior != "" {
+			body["Behavior"] = sessionEntry.Behavior
+		}
+		if sessionEntry.TTL != "" {
+			body["TTL"] = sessionEntry.TTL
+		}
+	}
+	req := mockapi.NewMockRequest("PUT", "/v1/session/create").WithBody(obj)
 
 	return m.WithJSONReply(req, status, reply)
 }
