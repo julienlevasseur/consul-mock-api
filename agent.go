@@ -162,6 +162,7 @@ func (m *Consul) AgentTokenSet(tokenType string, body []byte, status int) *mocka
 
 func (m *Consul) SessionCreate(sessionEntry *api.SessionEntry, writeOptions *api.WriteOptions, status int) *mockapi.MockAPICall {
 	req := mockapi.NewMockRequest("PUT", "/v1/session/create")
+	fmt.Println(req)
 
 	return m.WithNoResponseBody(req, status)
 }
